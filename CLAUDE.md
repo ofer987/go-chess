@@ -43,6 +43,8 @@
 - Ensure tests exist before modifying code.
   - Ensure that tests cover edge cases.
   - Create new tests if they do not exist.
+- When implementing new functionality, always write tests and update `ARCHITECTURE.md`.
+- Total test coverage must stay above 80%. Check with `scripts/coverage.sh`.
 
 ## Concurrency
 

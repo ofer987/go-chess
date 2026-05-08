@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(go test *)"
+      "Bash(go test *)",
+      "mcp__github__list_pull_requests"
     ]
   }
 }

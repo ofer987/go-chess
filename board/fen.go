@@ -142,5 +142,8 @@ func ParseSquare(s string) (int, error) {
 
 // SquareName returns the algebraic name of a square index (e.g. square 28 → "e4").
 func SquareName(sq int) string {
-	return string(rune('a'+sq%8)) + string(rune('1'+sq/8))
+	file := string(rune('a' + sq%8))
+	rank := string(rune('1' + sq/8))
+
+	return file + rank
 }

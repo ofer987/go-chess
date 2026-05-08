@@ -49,4 +49,13 @@ func TestBestMove(t *testing.T) {
 	if result.Move == (moves.Move{}) {
 		t.Error("BestMove(start, depth=1) returned zero move")
 	}
+
+	// Quiescence: White queen can take a Black pawn on d4, but Black queen
+	// on d8 recaptures — net loss of queen for pawn. BestMove must not play Qxd4.
+	// Without quiescence search this position triggers the horizon effect at depth=1.
+	b = mustParseFEN(t, "3q3k/8/8/8/3p4/8/8/K2Q4 w - - 0 1")
+	result = BestMove(b, 1)
+	if result.Move.To == 27 { // d4
+		t.Errorf("BestMove(quiescence) played Qxd4 losing queen for pawn: %v", result.Move)
+	}
 }

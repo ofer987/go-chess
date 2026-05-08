@@ -123,6 +123,45 @@ func TestInCheck(t *testing.T) {
 	}
 }
 
+func TestLegalCaptures(t *testing.T) {
+	// Starting position: no captures available.
+	b := mustParseFEN(t, startFEN)
+	if got := LegalCaptures(b); len(got) != 0 {
+		t.Errorf("LegalCaptures(start) = %d moves, want 0", len(got))
+	}
+
+	// After 1.e4 e5 2.d4: only White pawn d4xe5 is available.
+	b = mustParseFEN(t, "rnbqkbnr/pppp1ppp/8/4p3/3PP3/8/PPP2PPP/RNBQKBNR w KQkq - 0 3")
+	ms := LegalCaptures(b)
+	hasCapture := false
+	for _, m := range ms {
+		if m.From == 27 && m.To == 36 { // d4xe5
+			hasCapture = true
+		}
+	}
+	if !hasCapture {
+		t.Error("LegalCaptures: missing d4xe5 capture")
+	}
+	for _, m := range ms {
+		if b.Squares[m.To].Type == board.Empty && m.To != b.EnPassant {
+			t.Errorf("LegalCaptures returned non-capture move %v", m)
+		}
+	}
+
+	// En passant is included.
+	b = mustParseFEN(t, "rnbqkbnr/pppp1ppp/8/3Pp3/8/8/PPP1PPPP/RNBQKBNR w KQkq e6 0 2")
+	ms = LegalCaptures(b)
+	hasEP := false
+	for _, m := range ms {
+		if m.From == 35 && m.To == 44 { // d5xe6 en passant
+			hasEP = true
+		}
+	}
+	if !hasEP {
+		t.Error("LegalCaptures: missing en passant capture d5xe6")
+	}
+}
+
 func TestApply(t *testing.T) {
 	// Pawn double push sets en passant target and resets halfmove.
 	b := mustParseFEN(t, startFEN)

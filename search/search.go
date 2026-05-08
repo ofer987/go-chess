@@ -41,16 +41,41 @@ func BestMove(b *board.Board, depth int) Result {
 	return best
 }
 
+// quiesce extends the search at depth=0 by searching captures until the position
+// is quiet, preventing the horizon effect on tactical sequences.
+// Returns the score from the perspective of the side to move.
+func quiesce(b *board.Board, alpha, beta int) int {
+	standPat := eval.Evaluate(b)
+	if b.Turn == board.Black {
+		standPat = -standPat
+	}
+
+	if standPat >= beta {
+		return beta
+	}
+	if standPat > alpha {
+		alpha = standPat
+	}
+
+	for _, m := range moves.LegalCaptures(b) {
+		nb := moves.Apply(b, m)
+		score := -quiesce(nb, -beta, -alpha)
+		if score >= beta {
+			return beta
+		}
+		if score > alpha {
+			alpha = score
+		}
+	}
+
+	return alpha
+}
+
 // negamax implements the negamax variant of minimax with alpha-beta pruning.
 // Returns the score from the perspective of the side to move at this node.
 func negamax(b *board.Board, depth, alpha, beta int) int {
 	if depth == 0 {
-		score := eval.Evaluate(b)
-		if b.Turn == board.Black {
-			return -score
-		}
-
-		return score
+		return quiesce(b, alpha, beta)
 	}
 
 	legal := moves.Legal(b)

@@ -6,9 +6,9 @@
 graph TD
     cmd["cmd/chess\n(main)"]
     board["board\nBoard · Piece · Color\nParseFEN · Display"]
-    moves["moves\nMove · Legal · Apply\nInCheck"]
+    moves["moves\nMove · Legal · Apply\nInCheck · LegalCaptures"]
     eval["eval\nEvaluate"]
-    search["search\nBestMove · Result"]
+    search["search\nBestMove · Result\nquiesce"]
 
     cmd --> board
     cmd --> moves
@@ -28,14 +28,17 @@ graph LR
     brd["Board"]
     legal["[]Move"]
     apply["Board'"]
+    captures["[]Move\n(captures only)"]
     score["centipawn score"]
     result["Result{Move, Score}"]
 
     fen -->|"ParseFEN"| brd
     brd -->|"Legal"| legal
     legal -->|"Apply"| apply
-    apply -->|"Evaluate"| score
-    score -->|"negamax\n(alpha-beta)"| result
+    apply -->|"negamax\n(alpha-beta)"| captures
+    captures -->|"LegalCaptures\n+ Apply"| captures
+    captures -->|"Evaluate\n(quiet position)"| score
+    score -->|"BestMove"| result
 ```
 
 ## Key Types

@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Test with coverage
+        run: go test ./... -coverprofile=coverage.out
+
+      - name: Enforce minimum coverage
+        run: |
+          MINIMUM_COVERAGE=80
+
+          total=$(go tool cover -func=coverage.out | tail -1 | awk '{print $3}' | tr -d '%')
+          echo "Total coverage: ${total}%"
+          if awk "BEGIN { exit !($total < $MINIMUM_COVERAGE) }"; then
+            echo "Coverage ${total}% is below the required minimum of ${MINIMUM_COVERAGE}%"
+            exit 1
+          fi

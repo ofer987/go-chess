@@ -1,7 +1,13 @@
 {
   "permissions": {
     "allow": [
-      "Bash(go test *)"
+      "Bash(go test *)",
+      "mcp__github__list_pull_requests",
+      "Bash(go run *)",
+      "Bash(go clean *)",
+      "Bash(gofmt -l .)",
+      "Bash(go vet *)",
+      "Bash(gofmt *)"
     ]
   }
 }

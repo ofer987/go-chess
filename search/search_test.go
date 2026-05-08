@@ -16,6 +16,41 @@ func mustParseFEN(t *testing.T, fen string) *board.Board {
 	return b
 }
 
+func TestOrderMoves(t *testing.T) {
+	// Position: White pawn at e5 can take Black queen at f6 (PxQ, high score),
+	// White queen at a1 can take Black pawn at b2 (QxP, low score), plus quiet moves.
+	// After ordering: PxQ must appear before QxP, and both captures before quiet moves.
+	b := mustParseFEN(t, "4k3/8/5q2/4P3/8/8/1p6/Q3K3 w - - 0 1")
+	ms := moves.Legal(b)
+	orderMoves(b, ms)
+
+	pxqIdx, qxpIdx, firstQuietIdx := -1, -1, -1
+	for i, m := range ms {
+		switch {
+		case m.From == 36 && m.To == 45: // e5xf6 PxQ
+			pxqIdx = i
+		case m.From == 0 && m.To == 9: // Qa1xb2 QxP
+			qxpIdx = i
+		case firstQuietIdx == -1 && b.Squares[m.To].Type == board.Empty:
+			firstQuietIdx = i
+		}
+	}
+
+	if pxqIdx == -1 {
+		t.Fatal("PxQ move (e5xf6) not found in legal moves")
+	}
+	if qxpIdx == -1 {
+		t.Fatal("QxP move (Qa1xb2) not found in legal moves")
+	}
+	if pxqIdx >= qxpIdx {
+		t.Errorf("PxQ at index %d should come before QxP at index %d", pxqIdx, qxpIdx)
+	}
+	if firstQuietIdx != -1 && (pxqIdx >= firstQuietIdx || qxpIdx >= firstQuietIdx) {
+		t.Errorf("captures (PxQ=%d, QxP=%d) should all precede first quiet move at index %d",
+			pxqIdx, qxpIdx, firstQuietIdx)
+	}
+}
+
 // TestScholarsMate verifies that the engine finds Qxf7# from the Scholar's mate
 // position (after 1.e4 e5 2.Bc4 Nc6 3.Qh5 Nf6). The queen on h5 captures f7,
 // which is defended by the bishop on c4, delivering checkmate.

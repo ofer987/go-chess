@@ -8,7 +8,7 @@ graph TD
     board["board\nBoard · Piece · Color\nParseFEN · Display"]
     moves["moves\nMove · Legal · Apply\nInCheck · LegalCaptures"]
     eval["eval\nEvaluate"]
-    search["search\nBestMove · Result\nquiesce"]
+    search["search\nBestMove · Result\nquiesce · orderMoves (MVV-LVA)"]
 
     cmd --> board
     cmd --> moves
@@ -35,7 +35,7 @@ graph LR
     fen -->|"ParseFEN"| brd
     brd -->|"Legal"| legal
     legal -->|"Apply"| apply
-    apply -->|"negamax\n(alpha-beta)"| captures
+    apply -->|"negamax\n(alpha-beta +\nMVV-LVA order)"| captures
     captures -->|"LegalCaptures\n+ Apply"| captures
     captures -->|"Evaluate\n(quiet position)"| score
     score -->|"BestMove"| result

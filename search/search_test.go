@@ -16,6 +16,22 @@ func mustParseFEN(t *testing.T, fen string) *board.Board {
 	return b
 }
 
+// TestScholarsMate verifies that the engine finds Qxf7# from the Scholar's mate
+// position (after 1.e4 e5 2.Bc4 Nc6 3.Qh5 Nf6). The queen on h5 captures f7,
+// which is defended by the bishop on c4, delivering checkmate.
+func TestScholarsMate(t *testing.T) {
+	b := mustParseFEN(t, "r1bqkb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 4 4")
+	result := BestMove(b, 2)
+
+	wantMove := moves.Move{From: 39, To: 53} // Qh5xf7#
+	if result.Move != wantMove {
+		t.Errorf("Scholar's mate: BestMove = %v, want Qh5xf7 (%v)", result.Move, wantMove)
+	}
+	if result.Score < checkmate {
+		t.Errorf("Scholar's mate: score = %d, want >= %d (checkmate)", result.Score, checkmate)
+	}
+}
+
 func TestBestMove(t *testing.T) {
 	// Mate in 1: Rf7-f8# is the only checkmate. Score must reach checkmate threshold.
 	// Position: White Rook f7, White King g6, Black King h8.

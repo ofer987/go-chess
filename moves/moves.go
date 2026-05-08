@@ -44,6 +44,22 @@ func InCheck(b *board.Board) bool {
 	return inCheck(b, b.Turn)
 }
 
+// LegalCaptures returns all legal capturing moves (including en passant) for the side to move.
+func LegalCaptures(b *board.Board) []Move {
+	var ms []Move
+	for _, m := range pseudoLegal(b) {
+		if b.Squares[m.To].Type == board.Empty && m.To != b.EnPassant {
+			continue
+		}
+		nb := Apply(b, m)
+		if !inCheck(nb, b.Turn) {
+			ms = append(ms, m)
+		}
+	}
+
+	return ms
+}
+
 // Apply returns a new board state after making move m (no legality validation).
 func Apply(b *board.Board, m Move) *board.Board {
 	nb := *b

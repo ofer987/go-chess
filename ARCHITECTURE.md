@@ -40,11 +40,11 @@ graph LR
 
 ## Key Types
 
-| Type | Package | Description |
-|------|---------|-------------|
-| `Board` | `board` | 64-square array + turn, castling rights, en passant, clocks |
-| `Piece` | `board` | `{Type PieceType, Color Color}` |
-| `Move` | `moves` | `{From, To int, Promotion PieceType}` |
+| Type     | Package  | Description                                                     |
+| -------- | -------- | --------------------------------------------------------------- |
+| `Board`  | `board`  | 64-square array + turn, castling rights, en passant, clocks     |
+| `Piece`  | `board`  | `{Type PieceType, Color Color}`                                 |
+| `Move`   | `moves`  | `{From, To int, Promotion PieceType}`                           |
 | `Result` | `search` | `{Move Move, Score int}` — score from moving side's perspective |
 
 ## Score Convention

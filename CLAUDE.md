@@ -41,8 +41,8 @@
 - Always include a round-trip test when two functions are inverses (e.g. `ParseSquare`/`SquareName`).
 - Cover both valid inputs and invalid/edge-case inputs in the same test function.
 - Ensure tests exist before modifying code.
-   - Ensure that tests cover edge cases.
-   - Create new tests if they do not exist.
+  - Ensure that tests cover edge cases.
+  - Create new tests if they do not exist.
 
 ## Concurrency
 

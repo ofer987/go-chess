@@ -1,0 +1,19 @@
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binaries
+*.test
+
+# Build output
+*.out
+
+# Go workspace file
+go.work
+go.work.sum
+
+# Dependency cache
+vendor/

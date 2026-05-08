@@ -24,15 +24,18 @@ func ParseFEN(fen string) (*Board, error) {
 			file = 0
 			continue
 		}
+
 		if ch >= '1' && ch <= '8' {
 			file += int(ch - '0')
 			continue
 		}
+
 		sq := rank*8 + file
 		p, err := parsePieceChar(ch)
 		if err != nil {
 			return nil, err
 		}
+
 		b.Squares[sq] = p
 		file++
 	}
@@ -67,6 +70,7 @@ func ParseFEN(fen string) (*Board, error) {
 		if err != nil {
 			return nil, err
 		}
+
 		b.EnPassant = sq
 	}
 
@@ -75,6 +79,7 @@ func ParseFEN(fen string) (*Board, error) {
 		if err != nil {
 			return nil, fmt.Errorf("invalid halfmove clock: %s", parts[4])
 		}
+
 		b.HalfMove = n
 	}
 
@@ -83,6 +88,7 @@ func ParseFEN(fen string) (*Board, error) {
 		if err != nil {
 			return nil, fmt.Errorf("invalid fullmove number: %s", parts[5])
 		}
+
 		b.FullMove = n
 	}
 
@@ -115,6 +121,7 @@ func parsePieceChar(ch rune) (Piece, error) {
 	default:
 		return NoPiece, fmt.Errorf("unknown piece char: %c", ch)
 	}
+
 	return Piece{pt, color}, nil
 }
 
@@ -129,6 +136,7 @@ func ParseSquare(s string) (int, error) {
 	if f < 0 || f > 7 || r < 0 || r > 7 {
 		return -1, fmt.Errorf("invalid square: %s", s)
 	}
+
 	return r*8 + f, nil
 }
 

@@ -37,6 +37,7 @@ func BestMove(b *board.Board, depth int) Result {
 			alpha = score
 		}
 	}
+
 	return best
 }
 
@@ -48,6 +49,7 @@ func negamax(b *board.Board, depth, alpha, beta int) int {
 		if b.Turn == board.Black {
 			return -score
 		}
+
 		return score
 	}
 
@@ -57,6 +59,7 @@ func negamax(b *board.Board, depth, alpha, beta int) int {
 			// Checkmate: prefer faster mates (higher depth remaining = fewer moves to mate).
 			return -(checkmate + depth)
 		}
+
 		return 0 // stalemate
 	}
 
@@ -66,9 +69,11 @@ func negamax(b *board.Board, depth, alpha, beta int) int {
 		if score >= beta {
 			return beta // fail-hard cutoff
 		}
+
 		if score > alpha {
 			alpha = score
 		}
 	}
+
 	return alpha
 }

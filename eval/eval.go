@@ -86,8 +86,10 @@ func pstIndex(sq int, color board.Color) int {
 	if color == board.White {
 		return sq
 	}
+
 	// Mirror vertically for Black: rank 7 → rank 0, rank 0 → rank 7.
 	r, f := sq/8, sq%8
+
 	return (7-r)*8 + f
 }
 
@@ -107,6 +109,7 @@ func pstValue(pt board.PieceType, color board.Color, sq int) int {
 	case board.King:
 		return kingPST[idx]
 	}
+
 	return 0
 }
 
@@ -119,6 +122,7 @@ func Evaluate(b *board.Board) int {
 		if p.Type == board.Empty {
 			continue
 		}
+
 		val := pieceValue[p.Type] + pstValue(p.Type, p.Color, sq)
 		if p.Color == board.White {
 			score += val
@@ -126,5 +130,6 @@ func Evaluate(b *board.Board) int {
 			score -= val
 		}
 	}
+
 	return score
 }

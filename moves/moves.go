@@ -21,6 +21,7 @@ func (m Move) String() string {
 	case board.Knight:
 		s += "n"
 	}
+
 	return s
 }
 
@@ -34,6 +35,7 @@ func Legal(b *board.Board) []Move {
 			legal = append(legal, m)
 		}
 	}
+
 	return legal
 }
 
@@ -125,6 +127,7 @@ func Apply(b *board.Board, m Move) *board.Board {
 	}
 
 	nb.Turn = board.Opposite(b.Turn)
+
 	return &nb
 }
 
@@ -135,6 +138,7 @@ func pseudoLegal(b *board.Board) []Move {
 		if p.Type == board.Empty || p.Color != b.Turn {
 			continue
 		}
+
 		switch p.Type {
 		case board.Pawn:
 			ms = append(ms, pawnMoves(b, sq, p.Color)...)
@@ -150,6 +154,7 @@ func pseudoLegal(b *board.Board) []Move {
 			ms = append(ms, kingMoves(b, sq, p.Color)...)
 		}
 	}
+
 	return ms
 }
 
@@ -179,6 +184,7 @@ func slidingMoves(b *board.Board, from int, color board.Color, dirs [][2]int) []
 			f += d[1]
 		}
 	}
+
 	return ms
 }
 
@@ -190,11 +196,13 @@ func knightMoves(b *board.Board, from int, color board.Color) []Move {
 		if r < 0 || r > 7 || f < 0 || f > 7 {
 			continue
 		}
+
 		sq := r*8 + f
 		if b.Squares[sq].Color != color {
 			ms = append(ms, Move{from, sq, board.Empty})
 		}
 	}
+
 	return ms
 }
 
@@ -242,6 +250,7 @@ func pawnMoves(b *board.Board, from int, color board.Color) []Move {
 		if nf < 0 || nf > 7 || nr < 0 || nr > 7 {
 			continue
 		}
+
 		sq := nr*8 + nf
 		target := b.Squares[sq]
 		if (target.Type != board.Empty && target.Color != color) || sq == b.EnPassant {
@@ -265,6 +274,7 @@ func kingMoves(b *board.Board, from int, color board.Color) []Move {
 		if r < 0 || r > 7 || f < 0 || f > 7 {
 			continue
 		}
+
 		sq := r*8 + f
 		if b.Squares[sq].Color != color {
 			ms = append(ms, Move{from, sq, board.Empty})
@@ -313,6 +323,7 @@ func inCheck(b *board.Board, color board.Color) bool {
 			return squareAttacked(b, sq, board.Opposite(color))
 		}
 	}
+
 	return true // king missing — treat as check
 }
 
@@ -324,6 +335,7 @@ func squareAttacked(b *board.Board, sq int, by board.Color) bool {
 		if r < 0 || r > 7 || f < 0 || f > 7 {
 			continue
 		}
+
 		p := b.Squares[r*8+f]
 		if p.Type == board.Knight && p.Color == by {
 			return true
@@ -368,6 +380,7 @@ func squareAttacked(b *board.Board, sq int, by board.Color) bool {
 		if r < 0 || r > 7 || f < 0 || f > 7 {
 			continue
 		}
+
 		p := b.Squares[r*8+f]
 		if p.Type == board.King && p.Color == by {
 			return true
@@ -379,11 +392,13 @@ func squareAttacked(b *board.Board, sq int, by board.Color) bool {
 	if by == board.Black {
 		pawnRankDelta = 1
 	}
+
 	for _, df := range []int{-1, 1} {
 		r, f := rankOf(sq)+pawnRankDelta, fileOf(sq)+df
 		if r < 0 || r > 7 || f < 0 || f > 7 {
 			continue
 		}
+
 		p := b.Squares[r*8+f]
 		if p.Type == board.Pawn && p.Color == by {
 			return true

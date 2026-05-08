@@ -44,6 +44,7 @@ func main() {
 			fmt.Fprintln(os.Stderr, "depth must be a positive integer")
 			os.Exit(1)
 		}
+
 		depth = d
 	}
 

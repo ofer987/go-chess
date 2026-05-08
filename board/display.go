@@ -13,6 +13,7 @@ func pieceSymbol(p Piece) string {
 	if p.Type == Empty {
 		return "·"
 	}
+
 	return symbols[p.Color-1][p.Type]
 }
 
@@ -42,5 +43,6 @@ func Display(b *Board) string {
 		sb.WriteString("Black to move")
 	}
 	sb.WriteByte('\n')
+
 	return sb.String()
 }

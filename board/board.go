@@ -24,6 +24,7 @@ func Opposite(c Color) Color {
 	if c == White {
 		return Black
 	}
+
 	return White
 }
 

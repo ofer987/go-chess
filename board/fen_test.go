@@ -23,6 +23,7 @@ func TestParseSquare(t *testing.T) {
 			t.Errorf("ParseSquare(%q) returned unexpected error: %v", tc.input, err)
 			continue
 		}
+
 		if got != tc.want {
 			t.Errorf("ParseSquare(%q) = %d, want %d", tc.input, got, tc.want)
 		}
@@ -77,6 +78,7 @@ func TestParseSquareAndSquareNameRoundTrip(t *testing.T) {
 			t.Errorf("ParseSquare(SquareName(%d)) = %q, unexpected error: %v", sq, name, err)
 			continue
 		}
+
 		if got != sq {
 			t.Errorf("ParseSquare(SquareName(%d)) = %d, want %d", sq, got, sq)
 		}

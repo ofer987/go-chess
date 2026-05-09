@@ -117,7 +117,7 @@ func pstValue(pt board.PieceType, color board.Color, sq int) int {
 // Positive means White is better; negative means Black is better.
 func Evaluate(b *board.Board) int {
 	score := 0
-	for sq := 0; sq < 64; sq++ {
+	for sq := 0; sq < 64; sq += 1 {
 		p := b.Squares[sq]
 		if p.Type == board.Empty {
 			continue

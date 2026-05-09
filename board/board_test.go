@@ -27,7 +27,7 @@ func TestNewBoard(t *testing.T) {
 		t.Errorf("NewBoard().EnPassant = %d, want NoSquare", b.EnPassant)
 	}
 
-	for sq := 0; sq < 64; sq++ {
+	for sq := 0; sq < 64; sq += 1 {
 		if b.Squares[sq] != NoPiece {
 			t.Errorf("NewBoard().Squares[%d] = %v, want NoPiece", sq, b.Squares[sq])
 		}

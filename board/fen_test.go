@@ -148,7 +148,7 @@ func TestSquareName(t *testing.T) {
 }
 
 func TestParseSquareAndSquareNameRoundTrip(t *testing.T) {
-	for sq := Square(0); sq < 64; sq++ {
+	for sq := Square(0); sq < 64; sq += 1 {
 		name := SquareName(sq)
 		got, err := ParseSquare(name)
 		if err != nil {

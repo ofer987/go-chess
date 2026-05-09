@@ -21,10 +21,10 @@ func pieceSymbol(p Piece) string {
 func Display(b *Board) string {
 	var sb strings.Builder
 	sb.WriteString("  a b c d e f g h\n")
-	for r := 7; r >= 0; r-- {
+	for r := 7; r >= 0; r -= 1 {
 		sb.WriteByte(byte('1' + r))
 		sb.WriteByte(' ')
-		for f := 0; f < 8; f++ {
+		for f := 0; f < 8; f += 1 {
 			if f > 0 {
 				sb.WriteByte(' ')
 			}

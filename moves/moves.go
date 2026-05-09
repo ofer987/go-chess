@@ -135,11 +135,11 @@ func Apply(b *board.Board, m Move) *board.Board {
 	if piece.Type == board.Pawn || b.Squares[m.To].Type != board.Empty {
 		nb.HalfMove = 0
 	} else {
-		nb.HalfMove++
+		nb.HalfMove += 1
 	}
 
 	if b.Turn == board.Black {
-		nb.FullMove++
+		nb.FullMove += 1
 	}
 
 	nb.Turn = board.Opposite(b.Turn)
@@ -149,7 +149,7 @@ func Apply(b *board.Board, m Move) *board.Board {
 
 func pseudoLegal(b *board.Board) []Move {
 	var ms []Move
-	for sq := board.Square(0); sq < 64; sq++ {
+	for sq := board.Square(0); sq < 64; sq += 1 {
 		p := b.Squares[sq]
 		if p.Type == board.Empty || p.Color != b.Turn {
 			continue
@@ -331,7 +331,7 @@ func kingMoves(b *board.Board, from board.Square, color board.Color) []Move {
 }
 
 func inCheck(b *board.Board, color board.Color) bool {
-	for sq := board.Square(0); sq < 64; sq++ {
+	for sq := board.Square(0); sq < 64; sq += 1 {
 		p := b.Squares[sq]
 		if p.Type == board.King && p.Color == color {
 			return squareAttacked(b, sq, board.Opposite(color))

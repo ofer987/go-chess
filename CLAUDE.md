@@ -7,6 +7,8 @@
 - Run `go test ./...` before considering any change complete.
 - Add a blank line after guard statements.
 - Add a blank line before return statements.
+- Avoid `++` use `+= 1` instead.
+- Likewise, avoid `--` use `-= 1` instead.
 
 ## Naming
 

@@ -20,7 +20,7 @@ func ParseFEN(fen string) (*Board, error) {
 	file := 0
 	for _, ch := range parts[0] {
 		if ch == '/' {
-			rank--
+			rank -= 1
 			file = 0
 			continue
 		}
@@ -37,7 +37,7 @@ func ParseFEN(fen string) (*Board, error) {
 		}
 
 		b.Squares[sq] = p
-		file++
+		file += 1
 	}
 
 	switch parts[1] {

@@ -58,7 +58,7 @@ func TestScholarsMate(t *testing.T) {
 	b := mustParseFEN(t, "r1bqkb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 4 4")
 	result := BestMove(b, 2)
 
-	wantMove := moves.Move{From: 39, To: 53} // Qh5xf7#
+	wantMove := moves.Move{From: 39, To: 53, Kind: moves.Capture} // Qh5xf7#
 	if result.Move != wantMove {
 		t.Errorf("Scholar's mate: BestMove = %v, want Qh5xf7 (%v)", result.Move, wantMove)
 	}

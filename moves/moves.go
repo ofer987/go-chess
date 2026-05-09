@@ -2,11 +2,24 @@ package moves
 
 import "chess/board"
 
+// MoveKind classifies a Move for Apply dispatch and caller inspection.
+type MoveKind int
+
+const (
+	Quiet           MoveKind = iota
+	Capture
+	EnPassant
+	KingsideCastle
+	QueensideCastle
+	Promotion // pawn reaches back rank — quiet push or diagonal capture both
+)
+
 // Move represents a half-move (ply).
 type Move struct {
 	From      board.Square
 	To        board.Square
-	Promotion board.PieceType // Empty if not a promotion
+	Promotion board.PieceType // non-Empty only when Kind == Promotion
+	Kind      MoveKind
 }
 
 func (m Move) String() string {
@@ -48,7 +61,7 @@ func InCheck(b *board.Board) bool {
 func LegalCaptures(b *board.Board) []Move {
 	var ms []Move
 	for _, m := range pseudoLegal(b) {
-		if b.Squares[m.To].Type == board.Empty && m.To != b.EnPassant {
+		if m.Kind != Capture && m.Kind != EnPassant {
 			continue
 		}
 		nb := Apply(b, m)
@@ -60,46 +73,92 @@ func LegalCaptures(b *board.Board) []Move {
 	return ms
 }
 
+// mover applies the square mutations for a specific MoveKind.
+type mover interface {
+	apply(nb *board.Board, piece board.Piece, m Move)
+}
+
+type quietMover struct{}
+
+func (quietMover) apply(nb *board.Board, piece board.Piece, m Move) {
+	nb.Squares[m.To] = piece
+}
+
+type enPassantMover struct{}
+
+func (enPassantMover) apply(nb *board.Board, piece board.Piece, m Move) {
+	if piece.Color == board.White {
+		nb.Squares[m.To-8] = board.NoPiece
+	} else {
+		nb.Squares[m.To+8] = board.NoPiece
+	}
+	nb.Squares[m.To] = piece
+}
+
+type kingsideCastleMover struct{}
+
+func (kingsideCastleMover) apply(nb *board.Board, piece board.Piece, m Move) {
+	if piece.Color == board.White {
+		nb.Squares[5] = nb.Squares[7]
+		nb.Squares[7] = board.NoPiece
+	} else {
+		nb.Squares[61] = nb.Squares[63]
+		nb.Squares[63] = board.NoPiece
+	}
+	nb.Squares[m.To] = piece
+}
+
+type queensideCastleMover struct{}
+
+func (queensideCastleMover) apply(nb *board.Board, piece board.Piece, m Move) {
+	if piece.Color == board.White {
+		nb.Squares[3] = nb.Squares[0]
+		nb.Squares[0] = board.NoPiece
+	} else {
+		nb.Squares[59] = nb.Squares[56]
+		nb.Squares[56] = board.NoPiece
+	}
+	nb.Squares[m.To] = piece
+}
+
+type promotionMover struct{}
+
+func (promotionMover) apply(nb *board.Board, piece board.Piece, m Move) {
+	nb.Squares[m.To] = board.Piece{Type: m.Promotion, Color: piece.Color}
+}
+
+func moverFor(kind MoveKind) mover {
+	switch kind {
+	case EnPassant:
+		return enPassantMover{}
+	case KingsideCastle:
+		return kingsideCastleMover{}
+	case QueensideCastle:
+		return queensideCastleMover{}
+	case Promotion:
+		return promotionMover{}
+	default:
+		return quietMover{} // Quiet and Capture have identical square mutations
+	}
+}
+
 // Apply returns a new board state after making move m (no legality validation).
 func Apply(b *board.Board, m Move) *board.Board {
 	nb := *b
 	piece := nb.Squares[m.From]
 	nb.Squares[m.From] = board.NoPiece
 
-	if m.Promotion != board.Empty {
-		piece = board.Piece{Type: m.Promotion, Color: piece.Color}
-	}
+	moverFor(m.Kind).apply(&nb, piece, m)
 
-	// En passant: remove the captured pawn sitting one rank behind the target square.
-	if piece.Type == board.Pawn && m.To == b.EnPassant {
-		if piece.Color == board.White {
-			nb.Squares[m.To-8] = board.NoPiece
-		} else {
-			nb.Squares[m.To+8] = board.NoPiece
-		}
-	}
+	updateCastlingRights(&nb, m, piece)
+	updateEnPassantTarget(&nb, m, piece)
+	updateClocks(&nb, b, m, piece)
+	nb.Turn = board.Opposite(b.Turn)
 
-	// Castling: also move the rook.
-	if piece.Type == board.King {
-		switch {
-		case m.From == 4 && m.To == 6:
-			nb.Squares[5] = nb.Squares[7]
-			nb.Squares[7] = board.NoPiece
-		case m.From == 4 && m.To == 2:
-			nb.Squares[3] = nb.Squares[0]
-			nb.Squares[0] = board.NoPiece
-		case m.From == 60 && m.To == 62:
-			nb.Squares[61] = nb.Squares[63]
-			nb.Squares[63] = board.NoPiece
-		case m.From == 60 && m.To == 58:
-			nb.Squares[59] = nb.Squares[56]
-			nb.Squares[56] = board.NoPiece
-		}
-	}
+	return &nb
+}
 
-	nb.Squares[m.To] = piece
-
-	// Update castling rights.
+func updateCastlingRights(nb *board.Board, m Move, piece board.Piece) {
 	if piece.Type == board.King {
 		if piece.Color == board.White {
 			nb.WhiteKingSide = false
@@ -121,8 +180,9 @@ func Apply(b *board.Board, m Move) *board.Board {
 	if m.From == 63 || m.To == 63 {
 		nb.BlackKingSide = false
 	}
+}
 
-	// Update en passant target.
+func updateEnPassantTarget(nb *board.Board, m Move, piece board.Piece) {
 	nb.EnPassant = board.NoSquare
 	if piece.Type == board.Pawn {
 		if piece.Color == board.White && m.To-m.From == 16 {
@@ -131,8 +191,10 @@ func Apply(b *board.Board, m Move) *board.Board {
 			nb.EnPassant = m.From - 8
 		}
 	}
+}
 
-	if piece.Type == board.Pawn || b.Squares[m.To].Type != board.Empty {
+func updateClocks(nb *board.Board, b *board.Board, m Move, piece board.Piece) {
+	if piece.Type == board.Pawn || m.Kind == Capture || m.Kind == EnPassant {
 		nb.HalfMove = 0
 	} else {
 		nb.HalfMove += 1
@@ -141,10 +203,6 @@ func Apply(b *board.Board, m Move) *board.Board {
 	if b.Turn == board.Black {
 		nb.FullMove += 1
 	}
-
-	nb.Turn = board.Opposite(b.Turn)
-
-	return &nb
 }
 
 func pseudoLegal(b *board.Board) []Move {
@@ -178,7 +236,6 @@ var bishopDirs = [][2]int{{1, 1}, {1, -1}, {-1, 1}, {-1, -1}}
 var rookDirs = [][2]int{{1, 0}, {-1, 0}, {0, 1}, {0, -1}}
 var queenDirs = [][2]int{{1, 0}, {-1, 0}, {0, 1}, {0, -1}, {1, 1}, {1, -1}, {-1, 1}, {-1, -1}}
 
-
 func slidingMoves(b *board.Board, from board.Square, color board.Color, dirs [][2]int) []Move {
 	var ms []Move
 	for _, d := range dirs {
@@ -187,10 +244,10 @@ func slidingMoves(b *board.Board, from board.Square, color board.Color, dirs [][
 			sq := board.SquareOf(r, f)
 			target := b.Squares[sq]
 			if target.Type == board.Empty {
-				ms = append(ms, Move{from, sq, board.Empty})
+				ms = append(ms, Move{From: from, To: sq, Kind: Quiet})
 			} else {
 				if target.Color != color {
-					ms = append(ms, Move{from, sq, board.Empty})
+					ms = append(ms, Move{From: from, To: sq, Kind: Capture})
 				}
 				break
 			}
@@ -213,14 +270,18 @@ func knightMoves(b *board.Board, from board.Square, color board.Color) []Move {
 
 		sq := board.SquareOf(r, f)
 		if b.Squares[sq].Color != color {
-			ms = append(ms, Move{from, sq, board.Empty})
+			kind := Quiet
+			if b.Squares[sq].Type != board.Empty {
+				kind = Capture
+			}
+			ms = append(ms, Move{From: from, To: sq, Kind: kind})
 		}
 	}
 
 	return ms
 }
 
-var promotions = []board.PieceType{board.Queen, board.Rook, board.Bishop, board.Knight}
+var promotionPieces = []board.PieceType{board.Queen, board.Rook, board.Bishop, board.Knight}
 
 func pawnMoves(b *board.Board, from board.Square, color board.Color) []Move {
 	var ms []Move
@@ -241,16 +302,16 @@ func pawnMoves(b *board.Board, from board.Square, color board.Color) []Move {
 		sq := board.SquareOf(nr, f)
 		if b.Squares[sq].Type == board.Empty {
 			if nr == promRank {
-				for _, pt := range promotions {
-					ms = append(ms, Move{from, sq, pt})
+				for _, pt := range promotionPieces {
+					ms = append(ms, Move{From: from, To: sq, Promotion: pt, Kind: Promotion})
 				}
 			} else {
-				ms = append(ms, Move{from, sq, board.Empty})
+				ms = append(ms, Move{From: from, To: sq, Kind: Quiet})
 				// Double push from starting rank.
 				if r == startRank {
 					sq2 := board.SquareOf(nr+dir, f)
 					if b.Squares[sq2].Type == board.Empty {
-						ms = append(ms, Move{from, sq2, board.Empty})
+						ms = append(ms, Move{From: from, To: sq2, Kind: Quiet})
 					}
 				}
 			}
@@ -269,11 +330,13 @@ func pawnMoves(b *board.Board, from board.Square, color board.Color) []Move {
 		target := b.Squares[sq]
 		if (target.Type != board.Empty && target.Color != color) || sq == b.EnPassant {
 			if nr == promRank {
-				for _, pt := range promotions {
-					ms = append(ms, Move{from, sq, pt})
+				for _, pt := range promotionPieces {
+					ms = append(ms, Move{From: from, To: sq, Promotion: pt, Kind: Promotion})
 				}
+			} else if sq == b.EnPassant {
+				ms = append(ms, Move{From: from, To: sq, Kind: EnPassant})
 			} else {
-				ms = append(ms, Move{from, sq, board.Empty})
+				ms = append(ms, Move{From: from, To: sq, Kind: Capture})
 			}
 		}
 	}
@@ -291,7 +354,11 @@ func kingMoves(b *board.Board, from board.Square, color board.Color) []Move {
 
 		sq := board.SquareOf(r, f)
 		if b.Squares[sq].Color != color {
-			ms = append(ms, Move{from, sq, board.Empty})
+			kind := Quiet
+			if b.Squares[sq].Type != board.Empty {
+				kind = Capture
+			}
+			ms = append(ms, Move{From: from, To: sq, Kind: kind})
 		}
 	}
 
@@ -301,14 +368,14 @@ func kingMoves(b *board.Board, from board.Square, color board.Color) []Move {
 			b.Squares[5].Type == board.Empty &&
 			b.Squares[6].Type == board.Empty &&
 			!squareAttacked(b, 5, board.Black) {
-			ms = append(ms, Move{4, 6, board.Empty})
+			ms = append(ms, Move{From: 4, To: 6, Kind: KingsideCastle})
 		}
 		if b.WhiteQueenSide &&
 			b.Squares[3].Type == board.Empty &&
 			b.Squares[2].Type == board.Empty &&
 			b.Squares[1].Type == board.Empty &&
 			!squareAttacked(b, 3, board.Black) {
-			ms = append(ms, Move{4, 2, board.Empty})
+			ms = append(ms, Move{From: 4, To: 2, Kind: QueensideCastle})
 		}
 	}
 	if color == board.Black && from == 60 && !inCheck(b, color) {
@@ -316,14 +383,14 @@ func kingMoves(b *board.Board, from board.Square, color board.Color) []Move {
 			b.Squares[61].Type == board.Empty &&
 			b.Squares[62].Type == board.Empty &&
 			!squareAttacked(b, 61, board.White) {
-			ms = append(ms, Move{60, 62, board.Empty})
+			ms = append(ms, Move{From: 60, To: 62, Kind: KingsideCastle})
 		}
 		if b.BlackQueenSide &&
 			b.Squares[59].Type == board.Empty &&
 			b.Squares[58].Type == board.Empty &&
 			b.Squares[57].Type == board.Empty &&
 			!squareAttacked(b, 59, board.White) {
-			ms = append(ms, Move{60, 58, board.Empty})
+			ms = append(ms, Move{From: 60, To: 58, Kind: QueensideCastle})
 		}
 	}
 

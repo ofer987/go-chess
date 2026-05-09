@@ -22,18 +22,19 @@ func TestMoveString(t *testing.T) {
 		move Move
 		want string
 	}{
-		{Move{12, 28, board.Empty}, "e2e4"},
-		{Move{0, 7, board.Empty}, "a1h1"},
-		{Move{48, 56, board.Queen}, "a7a8q"},
-		{Move{48, 56, board.Rook}, "a7a8r"},
-		{Move{48, 56, board.Bishop}, "a7a8b"},
-		{Move{48, 56, board.Knight}, "a7a8n"},
+		{Move{From: 12, To: 28}, "e2e4"},
+		{Move{From: 0, To: 7}, "a1h1"},
+		{Move{From: 48, To: 56, Promotion: board.Queen, Kind: Promotion}, "a7a8q"},
+		{Move{From: 48, To: 56, Promotion: board.Rook, Kind: Promotion}, "a7a8r"},
+		{Move{From: 48, To: 56, Promotion: board.Bishop, Kind: Promotion}, "a7a8b"},
+		{Move{From: 48, To: 56, Promotion: board.Knight, Kind: Promotion}, "a7a8n"},
 	}
 
 	for _, tc := range cases {
 		got := tc.move.String()
 		if got != tc.want {
-			t.Errorf("Move{%d,%d,%v}.String() = %q, want %q", tc.move.From, tc.move.To, tc.move.Promotion, got, tc.want)
+			t.Errorf("Move{From:%d,To:%d,Promotion:%v,Kind:%v}.String() = %q, want %q",
+				tc.move.From, tc.move.To, tc.move.Promotion, tc.move.Kind, got, tc.want)
 		}
 	}
 }
@@ -62,10 +63,10 @@ func TestLegal(t *testing.T) {
 	ms := Legal(b)
 	hasKS, hasQS := false, false
 	for _, m := range ms {
-		if m.From == 4 && m.To == 6 {
+		if m.Kind == KingsideCastle {
 			hasKS = true
 		}
-		if m.From == 4 && m.To == 2 {
+		if m.Kind == QueensideCastle {
 			hasQS = true
 		}
 	}
@@ -81,7 +82,7 @@ func TestLegal(t *testing.T) {
 	ms = Legal(b)
 	hasEP := false
 	for _, m := range ms {
-		if m.From == 35 && m.To == 44 {
+		if m.Kind == EnPassant && m.From == 35 && m.To == 44 {
 			hasEP = true
 			break
 		}
@@ -143,8 +144,8 @@ func TestLegalCaptures(t *testing.T) {
 		t.Error("LegalCaptures: missing d4xe5 capture")
 	}
 	for _, m := range ms {
-		if b.Squares[m.To].Type == board.Empty && m.To != b.EnPassant {
-			t.Errorf("LegalCaptures returned non-capture move %v", m)
+		if m.Kind != Capture && m.Kind != EnPassant {
+			t.Errorf("LegalCaptures returned non-capture move %v (Kind=%v)", m, m.Kind)
 		}
 	}
 
@@ -165,7 +166,7 @@ func TestLegalCaptures(t *testing.T) {
 func TestApply(t *testing.T) {
 	// Pawn double push sets en passant target and resets halfmove.
 	b := mustParseFEN(t, startFEN)
-	nb := Apply(b, Move{12, 28, board.Empty}) // e2e4
+	nb := Apply(b, Move{From: 12, To: 28, Kind: Quiet}) // e2e4
 	if nb.Squares[28] != (board.Piece{Type: board.Pawn, Color: board.White}) {
 		t.Errorf("Apply e2e4: e4 = %v, want White Pawn", nb.Squares[28])
 	}
@@ -183,14 +184,14 @@ func TestApply(t *testing.T) {
 	}
 
 	// Non-pawn quiet move increments halfmove clock.
-	nb2 := Apply(b, Move{1, 16, board.Empty}) // Nb1-a3
+	nb2 := Apply(b, Move{From: 1, To: 16, Kind: Quiet}) // Nb1-a3
 	if nb2.HalfMove != 1 {
 		t.Errorf("Apply Nb1a3: HalfMove = %d, want 1", nb2.HalfMove)
 	}
 
 	// En passant capture removes the captured pawn.
 	epBoard := mustParseFEN(t, "rnbqkbnr/pppp1ppp/8/3Pp3/8/8/PPP1PPPP/RNBQKBNR w KQkq e6 0 2")
-	nb3 := Apply(epBoard, Move{35, 44, board.Empty}) // d5xe6
+	nb3 := Apply(epBoard, Move{From: 35, To: 44, Kind: EnPassant}) // d5xe6
 	if nb3.Squares[44] != (board.Piece{Type: board.Pawn, Color: board.White}) {
 		t.Errorf("Apply d5xe6: e6 = %v, want White Pawn", nb3.Squares[44])
 	}
@@ -200,7 +201,7 @@ func TestApply(t *testing.T) {
 
 	// Kingside castling moves king and rook and clears castling rights.
 	castleBoard := mustParseFEN(t, "r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1")
-	nb4 := Apply(castleBoard, Move{4, 6, board.Empty}) // O-O
+	nb4 := Apply(castleBoard, Move{From: 4, To: 6, Kind: KingsideCastle}) // O-O
 	if nb4.Squares[6] != (board.Piece{Type: board.King, Color: board.White}) {
 		t.Errorf("Apply O-O: g1 = %v, want White King", nb4.Squares[6])
 	}
@@ -213,7 +214,7 @@ func TestApply(t *testing.T) {
 
 	// Pawn promotion.
 	promBoard := mustParseFEN(t, "8/P7/8/8/8/8/8/K6k w - - 0 1")
-	nb5 := Apply(promBoard, Move{48, 56, board.Queen}) // a7a8=Q
+	nb5 := Apply(promBoard, Move{From: 48, To: 56, Promotion: board.Queen, Kind: Promotion}) // a7a8=Q
 	if nb5.Squares[56] != (board.Piece{Type: board.Queen, Color: board.White}) {
 		t.Errorf("Apply a7a8q: a8 = %v, want White Queen", nb5.Squares[56])
 	}
@@ -223,7 +224,7 @@ func TestApply(t *testing.T) {
 
 	// Black move increments FullMove.
 	afterE4 := mustParseFEN(t, "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1")
-	nb6 := Apply(afterE4, Move{52, 36, board.Empty}) // e7e5
+	nb6 := Apply(afterE4, Move{From: 52, To: 36, Kind: Quiet}) // e7e5
 	if nb6.FullMove != 2 {
 		t.Errorf("Apply e7e5: FullMove = %d, want 2", nb6.FullMove)
 	}
@@ -232,29 +233,28 @@ func TestApply(t *testing.T) {
 func TestApplyEnPassant(t *testing.T) {
 	// White double push sets en passant target.
 	b := mustParseFEN(t, startFEN)
-	nb := Apply(b, Move{12, 28, board.Empty}) // e2e4
-	if nb.EnPassant != 20 {                   // e3
+	nb := Apply(b, Move{From: 12, To: 28, Kind: Quiet}) // e2e4
+	if nb.EnPassant != 20 {                              // e3
 		t.Errorf("after e2e4: EnPassant = %d, want 20 (e3)", nb.EnPassant)
 	}
 
 	// En passant target clears after a non-double-push move.
-	nb2 := Apply(nb, Move{62, 45, board.Empty}) // Ng8f6 (Black quiet move)
+	nb2 := Apply(nb, Move{From: 62, To: 45, Kind: Quiet}) // Ng8f6 (Black quiet move)
 	if nb2.EnPassant != -1 {
 		t.Errorf("after Ng8f6: EnPassant = %d, want -1", nb2.EnPassant)
 	}
 
 	// Black double push sets en passant target.
 	afterE4 := mustParseFEN(t, "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1")
-	nb3 := Apply(afterE4, Move{52, 36, board.Empty}) // e7e5
-	if nb3.EnPassant != 44 {                          // e6
+	nb3 := Apply(afterE4, Move{From: 52, To: 36, Kind: Quiet}) // e7e5
+	if nb3.EnPassant != 44 {                                    // e6
 		t.Errorf("after e7e5: EnPassant = %d, want 44 (e6)", nb3.EnPassant)
 	}
 
 	// Black en passant capture: Black pawn at d4 captures White pawn that just played e2e4.
-	// Position: after 1.e4 d5 2.e5 d4 3.-- e2? no — let's use a direct FEN.
 	// Black pawn d4 (sq 27), White pawn e4 (sq 28), en passant target e3 (sq 20).
 	epBlack := mustParseFEN(t, "rnbqkbnr/ppp1pppp/8/8/3pP3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 2")
-	nb4 := Apply(epBlack, Move{27, 20, board.Empty}) // d4xe3
+	nb4 := Apply(epBlack, Move{From: 27, To: 20, Kind: EnPassant}) // d4xe3
 	if nb4.Squares[20] != (board.Piece{Type: board.Pawn, Color: board.Black}) {
 		t.Errorf("Apply d4xe3: e3 = %v, want Black Pawn", nb4.Squares[20])
 	}

@@ -4,8 +4,8 @@ import "chess/board"
 
 // Move represents a half-move (ply).
 type Move struct {
-	From      int
-	To        int
+	From      board.Square
+	To        board.Square
 	Promotion board.PieceType // Empty if not a promotion
 }
 
@@ -123,7 +123,7 @@ func Apply(b *board.Board, m Move) *board.Board {
 	}
 
 	// Update en passant target.
-	nb.EnPassant = -1
+	nb.EnPassant = board.NoSquare
 	if piece.Type == board.Pawn {
 		if piece.Color == board.White && m.To-m.From == 16 {
 			nb.EnPassant = m.From + 8
@@ -149,7 +149,7 @@ func Apply(b *board.Board, m Move) *board.Board {
 
 func pseudoLegal(b *board.Board) []Move {
 	var ms []Move
-	for sq := 0; sq < 64; sq++ {
+	for sq := board.Square(0); sq < 64; sq++ {
 		p := b.Squares[sq]
 		if p.Type == board.Empty || p.Color != b.Turn {
 			continue
@@ -179,7 +179,7 @@ var rookDirs = [][2]int{{1, 0}, {-1, 0}, {0, 1}, {0, -1}}
 var queenDirs = [][2]int{{1, 0}, {-1, 0}, {0, 1}, {0, -1}, {1, 1}, {1, -1}, {-1, 1}, {-1, -1}}
 
 
-func slidingMoves(b *board.Board, from int, color board.Color, dirs [][2]int) []Move {
+func slidingMoves(b *board.Board, from board.Square, color board.Color, dirs [][2]int) []Move {
 	var ms []Move
 	for _, d := range dirs {
 		r, f := board.RankOf(from)+d[0], board.FileOf(from)+d[1]
@@ -202,7 +202,7 @@ func slidingMoves(b *board.Board, from int, color board.Color, dirs [][2]int) []
 	return ms
 }
 
-func knightMoves(b *board.Board, from int, color board.Color) []Move {
+func knightMoves(b *board.Board, from board.Square, color board.Color) []Move {
 	var ms []Move
 	deltas := [][2]int{{2, 1}, {2, -1}, {-2, 1}, {-2, -1}, {1, 2}, {1, -2}, {-1, 2}, {-1, -2}}
 	for _, d := range deltas {
@@ -222,7 +222,7 @@ func knightMoves(b *board.Board, from int, color board.Color) []Move {
 
 var promotions = []board.PieceType{board.Queen, board.Rook, board.Bishop, board.Knight}
 
-func pawnMoves(b *board.Board, from int, color board.Color) []Move {
+func pawnMoves(b *board.Board, from board.Square, color board.Color) []Move {
 	var ms []Move
 	dir := 1
 	startRank := 1
@@ -281,7 +281,7 @@ func pawnMoves(b *board.Board, from int, color board.Color) []Move {
 	return ms
 }
 
-func kingMoves(b *board.Board, from int, color board.Color) []Move {
+func kingMoves(b *board.Board, from board.Square, color board.Color) []Move {
 	var ms []Move
 	for _, d := range queenDirs {
 		r, f := board.RankOf(from)+d[0], board.FileOf(from)+d[1]
@@ -331,7 +331,7 @@ func kingMoves(b *board.Board, from int, color board.Color) []Move {
 }
 
 func inCheck(b *board.Board, color board.Color) bool {
-	for sq := 0; sq < 64; sq++ {
+	for sq := board.Square(0); sq < 64; sq++ {
 		p := b.Squares[sq]
 		if p.Type == board.King && p.Color == color {
 			return squareAttacked(b, sq, board.Opposite(color))
@@ -342,7 +342,7 @@ func inCheck(b *board.Board, color board.Color) bool {
 }
 
 // squareAttacked reports whether sq is attacked by any piece of the given color.
-func squareAttacked(b *board.Board, sq int, by board.Color) bool {
+func squareAttacked(b *board.Board, sq board.Square, by board.Color) bool {
 	// Knights
 	for _, d := range [][2]int{{2, 1}, {2, -1}, {-2, 1}, {-2, -1}, {1, 2}, {1, -2}, {-1, 2}, {-1, -2}} {
 		r, f := board.RankOf(sq)+d[0], board.FileOf(sq)+d[1]

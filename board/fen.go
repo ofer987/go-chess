@@ -126,22 +126,22 @@ func parsePieceChar(ch rune) (Piece, error) {
 }
 
 // ParseSquare converts algebraic notation (e.g. "e4") to a square index.
-func ParseSquare(s string) (int, error) {
+func ParseSquare(s string) (Square, error) {
 	if len(s) != 2 {
-		return -1, fmt.Errorf("invalid square: %s", s)
+		return NoSquare, fmt.Errorf("invalid square: %s", s)
 	}
 
 	f := int(s[0] - 'a')
 	r := int(s[1] - '1')
 	if f < 0 || f > 7 || r < 0 || r > 7 {
-		return -1, fmt.Errorf("invalid square: %s", s)
+		return NoSquare, fmt.Errorf("invalid square: %s", s)
 	}
 
 	return SquareOf(r, f), nil
 }
 
 // SquareName returns the algebraic name of a square index (e.g. square 28 → "e4").
-func SquareName(sq int) string {
+func SquareName(sq Square) string {
 	file := string(rune('a' + FileOf(sq)))
 	rank := string(rune('1' + RankOf(sq)))
 

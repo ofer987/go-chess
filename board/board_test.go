@@ -23,8 +23,8 @@ func TestOpposite(t *testing.T) {
 func TestNewBoard(t *testing.T) {
 	b := NewBoard()
 
-	if b.EnPassant != -1 {
-		t.Errorf("NewBoard().EnPassant = %d, want -1", b.EnPassant)
+	if b.EnPassant != NoSquare {
+		t.Errorf("NewBoard().EnPassant = %d, want NoSquare", b.EnPassant)
 	}
 
 	for sq := 0; sq < 64; sq++ {
@@ -51,7 +51,7 @@ func TestIsEmpty(t *testing.T) {
 func TestPieceAt(t *testing.T) {
 	b := NewBoard()
 	cases := []struct {
-		sq    int
+		sq    Square
 		piece Piece
 	}{
 		{0, Piece{Rook, White}},

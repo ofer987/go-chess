@@ -87,9 +87,10 @@ func (quietMover) apply(nb *board.Board, piece board.Piece, m Move) {
 type enPassantMover struct{}
 
 func (enPassantMover) apply(nb *board.Board, piece board.Piece, m Move) {
-	if piece.Color == board.White {
+	switch piece.Color {
+	case board.White:
 		nb.Squares[m.To-8] = board.NoPiece
-	} else {
+	case board.Black:
 		nb.Squares[m.To+8] = board.NoPiece
 	}
 	nb.Squares[m.To] = piece
@@ -98,10 +99,11 @@ func (enPassantMover) apply(nb *board.Board, piece board.Piece, m Move) {
 type kingsideCastleMover struct{}
 
 func (kingsideCastleMover) apply(nb *board.Board, piece board.Piece, m Move) {
-	if piece.Color == board.White {
+	switch piece.Color {
+	case board.White:
 		nb.Squares[5] = nb.Squares[7]
 		nb.Squares[7] = board.NoPiece
-	} else {
+	case board.Black:
 		nb.Squares[61] = nb.Squares[63]
 		nb.Squares[63] = board.NoPiece
 	}
@@ -111,10 +113,11 @@ func (kingsideCastleMover) apply(nb *board.Board, piece board.Piece, m Move) {
 type queensideCastleMover struct{}
 
 func (queensideCastleMover) apply(nb *board.Board, piece board.Piece, m Move) {
-	if piece.Color == board.White {
+	switch piece.Color {
+	case board.White:
 		nb.Squares[3] = nb.Squares[0]
 		nb.Squares[0] = board.NoPiece
-	} else {
+	case board.Black:
 		nb.Squares[59] = nb.Squares[56]
 		nb.Squares[56] = board.NoPiece
 	}
@@ -160,10 +163,11 @@ func Apply(b *board.Board, m Move) *board.Board {
 
 func updateCastlingRights(nb *board.Board, m Move, piece board.Piece) {
 	if piece.Type == board.King {
-		if piece.Color == board.White {
+		switch piece.Color {
+		case board.White:
 			nb.WhiteKingSide = false
 			nb.WhiteQueenSide = false
-		} else {
+		case board.Black:
 			nb.BlackKingSide = false
 			nb.BlackQueenSide = false
 		}
@@ -185,10 +189,15 @@ func updateCastlingRights(nb *board.Board, m Move, piece board.Piece) {
 func updateEnPassantTarget(nb *board.Board, m Move, piece board.Piece) {
 	nb.EnPassant = board.NoSquare
 	if piece.Type == board.Pawn {
-		if piece.Color == board.White && m.To-m.From == 16 {
-			nb.EnPassant = m.From + 8
-		} else if piece.Color == board.Black && m.From-m.To == 16 {
-			nb.EnPassant = m.From - 8
+		switch piece.Color {
+		case board.White:
+			if m.To-m.From == 16 {
+				nb.EnPassant = m.From + 8
+			}
+		case board.Black:
+			if m.From-m.To == 16 {
+				nb.EnPassant = m.From - 8
+			}
 		}
 	}
 }
@@ -285,13 +294,12 @@ var promotionPieces = []board.PieceType{board.Queen, board.Rook, board.Bishop, b
 
 func pawnMoves(b *board.Board, from board.Square, color board.Color) []Move {
 	var ms []Move
-	dir := 1
-	startRank := 1
-	promRank := 7
-	if color == board.Black {
-		dir = -1
-		startRank = 6
-		promRank = 0
+	var dir, startRank, promRank int
+	switch color {
+	case board.White:
+		dir, startRank, promRank = 1, 1, 7
+	case board.Black:
+		dir, startRank, promRank = -1, 6, 0
 	}
 
 	r, f := board.RankOf(from), board.FileOf(from)
@@ -469,8 +477,11 @@ func squareAttacked(b *board.Board, sq board.Square, by board.Color) bool {
 	}
 
 	// Pawns: a white pawn at (rank-1, file±1) attacks sq; black pawn at (rank+1, file±1).
-	pawnRankDelta := -1 // look below sq for an attacking white pawn
-	if by == board.Black {
+	var pawnRankDelta int
+	switch by {
+	case board.White:
+		pawnRankDelta = -1
+	case board.Black:
 		pawnRankDelta = 1
 	}
 

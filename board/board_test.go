@@ -9,7 +9,7 @@ func TestOpposite(t *testing.T) {
 	}{
 		{White, Black},
 		{Black, White},
-		{NoColor, White},
+		{NoColor, NoColor},
 	}
 
 	for _, tc := range cases {

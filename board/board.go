@@ -21,11 +21,14 @@ const (
 )
 
 func Opposite(c Color) Color {
-	if c == White {
+	switch c {
+	case White:
 		return Black
+	case Black:
+		return White
 	}
 
-	return White
+	return NoColor
 }
 
 type Piece struct {

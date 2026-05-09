@@ -178,15 +178,13 @@ var bishopDirs = [][2]int{{1, 1}, {1, -1}, {-1, 1}, {-1, -1}}
 var rookDirs = [][2]int{{1, 0}, {-1, 0}, {0, 1}, {0, -1}}
 var queenDirs = [][2]int{{1, 0}, {-1, 0}, {0, 1}, {0, -1}, {1, 1}, {1, -1}, {-1, 1}, {-1, -1}}
 
-func rankOf(sq int) int { return sq / 8 }
-func fileOf(sq int) int { return sq % 8 }
 
 func slidingMoves(b *board.Board, from int, color board.Color, dirs [][2]int) []Move {
 	var ms []Move
 	for _, d := range dirs {
-		r, f := rankOf(from)+d[0], fileOf(from)+d[1]
+		r, f := board.RankOf(from)+d[0], board.FileOf(from)+d[1]
 		for r >= 0 && r <= 7 && f >= 0 && f <= 7 {
-			sq := r*8 + f
+			sq := board.SquareOf(r, f)
 			target := b.Squares[sq]
 			if target.Type == board.Empty {
 				ms = append(ms, Move{from, sq, board.Empty})
@@ -208,12 +206,12 @@ func knightMoves(b *board.Board, from int, color board.Color) []Move {
 	var ms []Move
 	deltas := [][2]int{{2, 1}, {2, -1}, {-2, 1}, {-2, -1}, {1, 2}, {1, -2}, {-1, 2}, {-1, -2}}
 	for _, d := range deltas {
-		r, f := rankOf(from)+d[0], fileOf(from)+d[1]
+		r, f := board.RankOf(from)+d[0], board.FileOf(from)+d[1]
 		if r < 0 || r > 7 || f < 0 || f > 7 {
 			continue
 		}
 
-		sq := r*8 + f
+		sq := board.SquareOf(r, f)
 		if b.Squares[sq].Color != color {
 			ms = append(ms, Move{from, sq, board.Empty})
 		}
@@ -235,12 +233,12 @@ func pawnMoves(b *board.Board, from int, color board.Color) []Move {
 		promRank = 0
 	}
 
-	r, f := rankOf(from), fileOf(from)
+	r, f := board.RankOf(from), board.FileOf(from)
 
 	// Single push.
 	nr := r + dir
 	if nr >= 0 && nr <= 7 {
-		sq := nr*8 + f
+		sq := board.SquareOf(nr, f)
 		if b.Squares[sq].Type == board.Empty {
 			if nr == promRank {
 				for _, pt := range promotions {
@@ -250,7 +248,7 @@ func pawnMoves(b *board.Board, from int, color board.Color) []Move {
 				ms = append(ms, Move{from, sq, board.Empty})
 				// Double push from starting rank.
 				if r == startRank {
-					sq2 := (nr+dir)*8 + f
+					sq2 := board.SquareOf(nr+dir, f)
 					if b.Squares[sq2].Type == board.Empty {
 						ms = append(ms, Move{from, sq2, board.Empty})
 					}
@@ -267,7 +265,7 @@ func pawnMoves(b *board.Board, from int, color board.Color) []Move {
 			continue
 		}
 
-		sq := nr*8 + nf
+		sq := board.SquareOf(nr, nf)
 		target := b.Squares[sq]
 		if (target.Type != board.Empty && target.Color != color) || sq == b.EnPassant {
 			if nr == promRank {
@@ -286,12 +284,12 @@ func pawnMoves(b *board.Board, from int, color board.Color) []Move {
 func kingMoves(b *board.Board, from int, color board.Color) []Move {
 	var ms []Move
 	for _, d := range queenDirs {
-		r, f := rankOf(from)+d[0], fileOf(from)+d[1]
+		r, f := board.RankOf(from)+d[0], board.FileOf(from)+d[1]
 		if r < 0 || r > 7 || f < 0 || f > 7 {
 			continue
 		}
 
-		sq := r*8 + f
+		sq := board.SquareOf(r, f)
 		if b.Squares[sq].Color != color {
 			ms = append(ms, Move{from, sq, board.Empty})
 		}
@@ -347,12 +345,12 @@ func inCheck(b *board.Board, color board.Color) bool {
 func squareAttacked(b *board.Board, sq int, by board.Color) bool {
 	// Knights
 	for _, d := range [][2]int{{2, 1}, {2, -1}, {-2, 1}, {-2, -1}, {1, 2}, {1, -2}, {-1, 2}, {-1, -2}} {
-		r, f := rankOf(sq)+d[0], fileOf(sq)+d[1]
+		r, f := board.RankOf(sq)+d[0], board.FileOf(sq)+d[1]
 		if r < 0 || r > 7 || f < 0 || f > 7 {
 			continue
 		}
 
-		p := b.Squares[r*8+f]
+		p := b.Squares[board.SquareOf(r, f)]
 		if p.Type == board.Knight && p.Color == by {
 			return true
 		}
@@ -360,9 +358,9 @@ func squareAttacked(b *board.Board, sq int, by board.Color) bool {
 
 	// Diagonals (bishops and queens)
 	for _, d := range bishopDirs {
-		r, f := rankOf(sq)+d[0], fileOf(sq)+d[1]
+		r, f := board.RankOf(sq)+d[0], board.FileOf(sq)+d[1]
 		for r >= 0 && r <= 7 && f >= 0 && f <= 7 {
-			p := b.Squares[r*8+f]
+			p := b.Squares[board.SquareOf(r, f)]
 			if p.Type != board.Empty {
 				if p.Color == by && (p.Type == board.Bishop || p.Type == board.Queen) {
 					return true
@@ -376,9 +374,9 @@ func squareAttacked(b *board.Board, sq int, by board.Color) bool {
 
 	// Straights (rooks and queens)
 	for _, d := range rookDirs {
-		r, f := rankOf(sq)+d[0], fileOf(sq)+d[1]
+		r, f := board.RankOf(sq)+d[0], board.FileOf(sq)+d[1]
 		for r >= 0 && r <= 7 && f >= 0 && f <= 7 {
-			p := b.Squares[r*8+f]
+			p := b.Squares[board.SquareOf(r, f)]
 			if p.Type != board.Empty {
 				if p.Color == by && (p.Type == board.Rook || p.Type == board.Queen) {
 					return true
@@ -392,12 +390,12 @@ func squareAttacked(b *board.Board, sq int, by board.Color) bool {
 
 	// King
 	for _, d := range queenDirs {
-		r, f := rankOf(sq)+d[0], fileOf(sq)+d[1]
+		r, f := board.RankOf(sq)+d[0], board.FileOf(sq)+d[1]
 		if r < 0 || r > 7 || f < 0 || f > 7 {
 			continue
 		}
 
-		p := b.Squares[r*8+f]
+		p := b.Squares[board.SquareOf(r, f)]
 		if p.Type == board.King && p.Color == by {
 			return true
 		}
@@ -410,12 +408,12 @@ func squareAttacked(b *board.Board, sq int, by board.Color) bool {
 	}
 
 	for _, df := range []int{-1, 1} {
-		r, f := rankOf(sq)+pawnRankDelta, fileOf(sq)+df
+		r, f := board.RankOf(sq)+pawnRankDelta, board.FileOf(sq)+df
 		if r < 0 || r > 7 || f < 0 || f > 7 {
 			continue
 		}
 
-		p := b.Squares[r*8+f]
+		p := b.Squares[board.SquareOf(r, f)]
 		if p.Type == board.Pawn && p.Color == by {
 			return true
 		}

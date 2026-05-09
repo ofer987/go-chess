@@ -28,7 +28,7 @@ func Display(b *Board) string {
 			if f > 0 {
 				sb.WriteByte(' ')
 			}
-			sb.WriteString(pieceSymbol(b.Squares[r*8+f]))
+			sb.WriteString(pieceSymbol(b.Squares[SquareOf(r, f)]))
 		}
 		sb.WriteByte(' ')
 		sb.WriteByte(byte('1' + r))

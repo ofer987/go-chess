@@ -59,3 +59,7 @@ func (b *Board) IsEmpty(sq int) bool {
 func (b *Board) PieceAt(sq int) Piece {
 	return b.Squares[sq]
 }
+
+func RankOf(sq int) int { return sq / 8 }
+func FileOf(sq int) int { return sq % 8 }
+func SquareOf(rank, file int) int { return rank*8 + file }

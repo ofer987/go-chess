@@ -20,7 +20,7 @@ func ParseFEN(fen string) (*Board, error) {
 	file := 0
 	for _, ch := range parts[0] {
 		if ch == '/' {
-			rank--
+			rank -= 1
 			file = 0
 			continue
 		}
@@ -30,14 +30,14 @@ func ParseFEN(fen string) (*Board, error) {
 			continue
 		}
 
-		sq := rank*8 + file
+		sq := SquareOf(rank, file)
 		p, err := parsePieceChar(ch)
 		if err != nil {
 			return nil, err
 		}
 
 		b.Squares[sq] = p
-		file++
+		file += 1
 	}
 
 	switch parts[1] {
@@ -126,24 +126,24 @@ func parsePieceChar(ch rune) (Piece, error) {
 }
 
 // ParseSquare converts algebraic notation (e.g. "e4") to a square index.
-func ParseSquare(s string) (int, error) {
+func ParseSquare(s string) (Square, error) {
 	if len(s) != 2 {
-		return -1, fmt.Errorf("invalid square: %s", s)
+		return NoSquare, fmt.Errorf("invalid square: %s", s)
 	}
 
 	f := int(s[0] - 'a')
 	r := int(s[1] - '1')
 	if f < 0 || f > 7 || r < 0 || r > 7 {
-		return -1, fmt.Errorf("invalid square: %s", s)
+		return NoSquare, fmt.Errorf("invalid square: %s", s)
 	}
 
-	return r*8 + f, nil
+	return SquareOf(r, f), nil
 }
 
 // SquareName returns the algebraic name of a square index (e.g. square 28 → "e4").
-func SquareName(sq int) string {
-	file := string(rune('a' + sq%8))
-	rank := string(rune('1' + sq/8))
+func SquareName(sq Square) string {
+	file := string(rune('a' + FileOf(sq)))
+	rank := string(rune('1' + RankOf(sq)))
 
 	return file + rank
 }

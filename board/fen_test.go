@@ -23,8 +23,8 @@ func TestParseFEN(t *testing.T) {
 	if !start.WhiteKingSide || !start.WhiteQueenSide || !start.BlackKingSide || !start.BlackQueenSide {
 		t.Error("start castling rights not all true")
 	}
-	if start.EnPassant != -1 {
-		t.Errorf("start.EnPassant = %d, want -1", start.EnPassant)
+	if start.EnPassant != NoSquare {
+		t.Errorf("start.EnPassant = %d, want NoSquare", start.EnPassant)
 	}
 	if start.HalfMove != 0 || start.FullMove != 1 {
 		t.Errorf("start clocks = %d/%d, want 0/1", start.HalfMove, start.FullMove)
@@ -82,7 +82,7 @@ func TestParseFEN(t *testing.T) {
 func TestParseSquare(t *testing.T) {
 	valid := []struct {
 		input string
-		want  int
+		want  Square
 	}{
 		{"a1", 0},
 		{"h1", 7},
@@ -126,7 +126,7 @@ func TestParseSquare(t *testing.T) {
 
 func TestSquareName(t *testing.T) {
 	cases := []struct {
-		sq   int
+		sq   Square
 		want string
 	}{
 		{0, "a1"},
@@ -148,7 +148,7 @@ func TestSquareName(t *testing.T) {
 }
 
 func TestParseSquareAndSquareNameRoundTrip(t *testing.T) {
-	for sq := 0; sq < 64; sq++ {
+	for sq := Square(0); sq < 64; sq += 1 {
 		name := SquareName(sq)
 		got, err := ParseSquare(name)
 		if err != nil {

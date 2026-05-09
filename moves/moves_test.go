@@ -228,3 +228,40 @@ func TestApply(t *testing.T) {
 		t.Errorf("Apply e7e5: FullMove = %d, want 2", nb6.FullMove)
 	}
 }
+
+func TestApplyEnPassant(t *testing.T) {
+	// White double push sets en passant target.
+	b := mustParseFEN(t, startFEN)
+	nb := Apply(b, Move{12, 28, board.Empty}) // e2e4
+	if nb.EnPassant != 20 {                   // e3
+		t.Errorf("after e2e4: EnPassant = %d, want 20 (e3)", nb.EnPassant)
+	}
+
+	// En passant target clears after a non-double-push move.
+	nb2 := Apply(nb, Move{62, 45, board.Empty}) // Ng8f6 (Black quiet move)
+	if nb2.EnPassant != -1 {
+		t.Errorf("after Ng8f6: EnPassant = %d, want -1", nb2.EnPassant)
+	}
+
+	// Black double push sets en passant target.
+	afterE4 := mustParseFEN(t, "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1")
+	nb3 := Apply(afterE4, Move{52, 36, board.Empty}) // e7e5
+	if nb3.EnPassant != 44 {                          // e6
+		t.Errorf("after e7e5: EnPassant = %d, want 44 (e6)", nb3.EnPassant)
+	}
+
+	// Black en passant capture: Black pawn at d4 captures White pawn that just played e2e4.
+	// Position: after 1.e4 d5 2.e5 d4 3.-- e2? no — let's use a direct FEN.
+	// Black pawn d4 (sq 27), White pawn e4 (sq 28), en passant target e3 (sq 20).
+	epBlack := mustParseFEN(t, "rnbqkbnr/ppp1pppp/8/8/3pP3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 2")
+	nb4 := Apply(epBlack, Move{27, 20, board.Empty}) // d4xe3
+	if nb4.Squares[20] != (board.Piece{Type: board.Pawn, Color: board.Black}) {
+		t.Errorf("Apply d4xe3: e3 = %v, want Black Pawn", nb4.Squares[20])
+	}
+	if nb4.Squares[28].Type != board.Empty {
+		t.Error("Apply d4xe3: e4 not empty (captured White pawn not removed)")
+	}
+	if nb4.EnPassant != -1 {
+		t.Errorf("Apply d4xe3: EnPassant = %d, want -1 (cleared after capture)", nb4.EnPassant)
+	}
+}

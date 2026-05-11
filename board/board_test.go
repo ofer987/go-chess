@@ -2,6 +2,34 @@ package board
 
 import "testing"
 
+func TestMirrorVertical(t *testing.T) {
+	cases := []struct {
+		sq   Square
+		want Square
+	}{
+		{0, 56},  // a1 → a8
+		{56, 0},  // a8 → a1
+		{7, 63},  // h1 → h8
+		{63, 7},  // h8 → h1
+		{4, 60},  // e1 → e8
+		{28, 36}, // e4 → e5
+	}
+
+	for _, tc := range cases {
+		got := MirrorVertical(tc.sq)
+		if got != tc.want {
+			t.Errorf("MirrorVertical(%d) = %d, want %d", tc.sq, got, tc.want)
+		}
+	}
+
+	// Round-trip: mirroring twice returns the original square.
+	for sq := Square(0); sq < 64; sq += 1 {
+		if got := MirrorVertical(MirrorVertical(sq)); got != sq {
+			t.Errorf("MirrorVertical(MirrorVertical(%d)) = %d, want %d", sq, got, sq)
+		}
+	}
+}
+
 func TestOpposite(t *testing.T) {
 	cases := []struct {
 		input Color

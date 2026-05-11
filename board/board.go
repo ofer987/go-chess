@@ -67,6 +67,12 @@ func (b *Board) PieceAt(sq Square) Piece {
 	return b.Squares[sq]
 }
 
-func RankOf(sq Square) int    { return int(sq) / 8 }
-func FileOf(sq Square) int    { return int(sq) % 8 }
+func RankOf(sq Square) int           { return int(sq) / 8 }
+func FileOf(sq Square) int           { return int(sq) % 8 }
 func SquareOf(rank, file int) Square { return Square(rank*8 + file) }
+
+// MirrorVertical returns sq reflected across the board's horizontal midline
+// (rank 0 ↔ rank 7, rank 1 ↔ rank 6, …).
+func MirrorVertical(sq Square) Square {
+	return SquareOf(7-RankOf(sq), FileOf(sq))
+}

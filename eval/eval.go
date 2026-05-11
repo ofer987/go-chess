@@ -82,20 +82,18 @@ var kingPST = [64]int{
 	-30, -40, -40, -50, -50, -40, -40, -30,
 }
 
-func pstIndex(sq int, color board.Color) int {
+func pstIndex(sq board.Square, color board.Color) board.Square {
 	switch color {
 	case board.White:
 		return sq
 	case board.Black:
-		// Mirror vertically for Black: rank 7 → rank 0, rank 0 → rank 7.
-		r, f := sq/8, sq%8
-		return (7-r)*8 + f
+		return board.MirrorVertical(sq)
 	}
 
 	return sq
 }
 
-func pstValue(pt board.PieceType, color board.Color, sq int) int {
+func pstValue(pt board.PieceType, color board.Color, sq board.Square) int {
 	idx := pstIndex(sq, color)
 	switch pt {
 	case board.Pawn:
@@ -119,7 +117,7 @@ func pstValue(pt board.PieceType, color board.Color, sq int) int {
 // Positive means White is better; negative means Black is better.
 func Evaluate(b *board.Board) int {
 	score := 0
-	for sq := 0; sq < 64; sq += 1 {
+	for sq := board.Square(0); sq < 64; sq += 1 {
 		p := b.Squares[sq]
 		if p.Type == board.Empty {
 			continue

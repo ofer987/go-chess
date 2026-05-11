@@ -6,7 +6,7 @@ import "chess/board"
 type MoveKind int
 
 const (
-	Quiet           MoveKind = iota
+	Quiet MoveKind = iota
 	Capture
 	EnPassant
 	KingsideCastle
